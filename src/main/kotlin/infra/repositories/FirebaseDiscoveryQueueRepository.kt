@@ -1,5 +1,6 @@
 package com.example.infra.repositories
 
+import com.example.domain.useCases.ClearDiscoveryQueueUseCase
 import com.example.infra.interfaces.IDiscoveryListRepository
 import com.google.cloud.Timestamp
 import com.google.cloud.firestore.Firestore
@@ -43,4 +44,39 @@ class FirebaseDiscoveryQueueRepository : IDiscoveryListRepository {
 
         println("${houseIds.size} casas añadidas a la cola de descubrimiento para el usuario $userId")
     }
+
+    override fun removeHouse(userId: String, houseId: String) {
+        val discoveryQueueCollection = db.collection(usersCollectionName)
+            .document(userId)
+            .collection(discoveryCollectionName)
+
+        val houseDocument = discoveryQueueCollection.document(houseId)
+
+        houseDocument.delete().get()
+
+        println("Casa $houseId eliminada de la cola de descubrimiento del usuario $userId")
+    }
+
+    override fun getDiscoveryQueue(userId: String): List<String> {
+        val discoveryQueueCollection = db.collection(usersCollectionName).document(userId)
+            .collection(discoveryCollectionName)
+
+        val documents = discoveryQueueCollection.get().get().documents
+        return documents.map{it.id}
+    }
+
+    override fun clearDiscoveryQueue(userId: String){
+        val discoveryQueueCollection = db.collection(usersCollectionName).document(userId)
+            .collection(discoveryCollectionName)
+
+        val documents = discoveryQueueCollection.get().get().documents
+        val batch = db.batch()
+
+        for(doc in documents){
+            batch.delete(doc.reference)
+        }
+        batch.commit().get()
+        println("Discovery queue for $userId cleared")
+    }
+
 }
