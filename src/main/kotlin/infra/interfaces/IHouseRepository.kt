@@ -8,4 +8,5 @@ interface IHouseRepository {
     fun getHouseById(houseId: String): House
     fun getUserHouses(userId: String): List<House>
     fun findNearbyHouses(lat: Double, lon: Double, radiusInM: Double): List<House>
+
 }
